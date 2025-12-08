@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+# Docusaurus build outputs
+build/
+docusaurus.config.js.bak
+
+# Environment variables
+.env*
+!.env.example
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docusaurus specific
+.cache/
+.docusaurus/
+.server/
+.client/
+
+# Build artifacts
+dist/
+out/
+
+# System Files
+.DS_Store
+Thumbs.db
