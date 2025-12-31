@@ -1,5 +1,37 @@
 # Dependencies
 node_modules/
+nul
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# FastAPI/uvicorn
+*.log
+.uvicorn.pid
 
 # Docusaurus build outputs
 build/
@@ -54,3 +86,8 @@ out/
 # System Files
 .DS_Store
 Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/

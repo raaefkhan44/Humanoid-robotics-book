@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Request Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Frontend Request Test - Debug 404 Error</h1>
+
+    <div class="test-section">
+        <h2>Test 1: Exact Frontend Request (Development Mode)</h2>
+        <p>This mimics what the frontend chatbot does in development mode.</p>
+        <button onclick="testDevelopmentMode()">Test Development Mode Request</button>
+        <div id="test1-output" class="output"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Direct Backend Test</h2>
+        <button onclick="testDirect()">Test Direct Backend</button>
+        <div id="test2-output" class="output"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Check CORS</h2>
+        <button onclick="testCORS()">Test CORS</button>
+        <div id="test3-output" class="output"></div>
+    </div>
+
+    <script>
+        async function testDevelopmentMode() {
+            const output = document.getElementById('test1-output');
+            output.innerHTML = 'Testing...';
+
+            try {
+                // THIS IS EXACTLY WHAT THE CHATBOT DOES
+                const NODE_ENV = 'development'; // Simulating development mode
+                const backendUrl = NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : '';
+                const fullUrl = `${backendUrl}/api/chat`;
+
+                output.innerHTML = `Making request to: ${fullUrl}\n\n`;
+                console.log('[TEST] Sending request to:', fullUrl);
+
+                const requestBody = {
+                    message: "What is ROS 2?",
+                    selected_text: null,
+                    session_id: null
+                };
+
+                const response = await fetch(fullUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody),
+                });
+
+                output.innerHTML += `Response Status: ${response.status} ${response.statusText}\n`;
+                console.log('[TEST] Response status:', response.status);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    output.innerHTML += `\n<span class="success">✅ SUCCESS!</span>\n\n`;
+                    output.innerHTML += `Answer Length: ${data.answer.length} chars\n`;
+                    output.innerHTML += `Sources: ${data.sources.length}\n`;
+                    output.innerHTML += `Session ID: ${data.session_id}\n\n`;
+                    output.innerHTML += `Full Response:\n${JSON.stringify(data, null, 2)}`;
+                    console.log('[TEST] Response data:', data);
+                } else {
+                    const errorText = await response.text();
+                    output.innerHTML += `\n<span class="error">❌ ERROR</span>\n\n`;
+                    output.innerHTML += `Error Response:\n${errorText}`;
+                    console.error('[TEST] Error response:', errorText);
+                }
+            } catch (error) {
+                output.innerHTML += `\n<span class="error">❌ EXCEPTION</span>\n\n`;
+                output.innerHTML += `Error: ${error.message}\n`;
+                output.innerHTML += `\nThis usually means:\n`;
+                output.innerHTML += `1. Backend is not running on port 8000\n`;
+                output.innerHTML += `2. CORS is blocking the request\n`;
+                output.innerHTML += `3. Network connection issue\n`;
+                console.error('[TEST] Exception:', error);
+            }
+        }
+
+        async function testDirect() {
+            const output = document.getElementById('test2-output');
+            output.innerHTML = 'Testing...';
+
+            try {
+                const url = 'http://127.0.0.1:8000/api/chat';
+                output.innerHTML = `Testing: ${url}\n\n`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: "test"}),
+                });
+
+                output.innerHTML += `Status: ${response.status}\n`;
+
+                if (response.ok) {
+                    const data = await response.json();
+                    output.innerHTML += `<span class="success">✅ Backend is working!</span>\n`;
+                    output.innerHTML += JSON.stringify(data, null, 2);
+                } else {
+                    output.innerHTML += `<span class="error">❌ Backend returned error</span>\n`;
+                    output.innerHTML += await response.text();
+                }
+            } catch (error) {
+                output.innerHTML += `<span class="error">❌ Cannot connect to backend</span>\n`;
+                output.innerHTML += `Error: ${error.message}`;
+            }
+        }
+
+        async function testCORS() {
+            const output = document.getElementById('test3-output');
+            output.innerHTML = 'Testing CORS...\n\n';
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/health', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                if (response.ok) {
+                    output.innerHTML += `<span class="success">✅ CORS is working!</span>\n`;
+                    output.innerHTML += `Status: ${response.status}\n`;
+                    output.innerHTML += `CORS headers OK\n`;
+                    const data = await response.json();
+                    output.innerHTML += JSON.stringify(data, null, 2);
+                } else {
+                    output.innerHTML += `<span class="error">❌ CORS failed</span>\n`;
+                    output.innerHTML += `Status: ${response.status}`;
+                }
+            } catch (error) {
+                output.innerHTML += `<span class="error">❌ CORS is blocked or backend not running</span>\n`;
+                output.innerHTML += `Error: ${error.message}\n\n`;
+                output.innerHTML += `Check:\n`;
+                output.innerHTML += `1. Backend running on port 8000\n`;
+                output.innerHTML += `2. CORS middleware enabled\n`;
+                output.innerHTML += `3. Browser console for details`;
+            }
+        }
+
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            console.log('[TEST] Page loaded, ready to test');
+            console.log('[TEST] Open DevTools (F12) to see detailed logs');
+        });
+    </script>
+</body>
+</html>

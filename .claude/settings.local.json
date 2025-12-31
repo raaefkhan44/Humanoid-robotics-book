@@ -2,7 +2,22 @@
   "permissions": {
     "allow": [
       "Bash(npm install --verbose)",
-      "Bash(npx docusaurus start)"
+      "Bash(npx docusaurus start)",
+      "Bash(pip install fastapi uvicorn[standard] slowapi python-dotenv)",
+      "Bash(git rev-parse --git-dir)",
+      "Bash(cat start-all.js)",
+      "Bash(pip install -r requirements.txt)",
+      "Bash(pip install fastapi uvicorn google-generativeai openai qdrant-client python-dotenv sqlalchemy)",
+      "Bash(pkill -f \"docusaurus\")",
+      "Bash(npm start)",
+      "Bash(pkill -f \"node.*docusaurus\")",
+      "Bash(pkill -f \"npm.*start\")",
+      "Bash(powershell Remove-Item -Recurse -Force build)",
+      "Bash(npx docusaurus serve --dir dist)",
+      "Bash(npm run build -- --out-dir dist)",
+      "Bash(cat /tmp/claude/tasks/b624163.output)",
+      "Bash(python -c \"\nimport os\nimport sys\nsys.path.insert(0, ''src'')\n\n# Load environment variables\nfrom dotenv import load_dotenv\nload_dotenv()\n\n# Test the query functionality through the API\nfrom src.services.embedding_service import embedding_service\n\nprint(''Testing the full RAG pipeline...'')\n\n# Check that embeddings are available\ncount = embedding_service.count_embeddings()\nprint(f''Total embeddings in Qdrant: {count}'')\n\n# Test a query through the embedding service\ntest_query = ''What is humanoid robotics?''\nprint(f''Query: {test_query}'')\n\nfrom src.config.settings import settings\nquery_embedding = settings.cohere_client.embed(\n    texts=[test_query],\n    model=settings.EMBEDDING_MODEL,\n    input_type=''search_query''\n)\n\n# Search for similar content\nresults = embedding_service.qdrant_service.search_similar(query_embedding.embeddings[0], top_k=3)\nprint(f''Retrieved {len(results)} relevant chunks'')\n\nfor i, result in enumerate(results):\n    print(f''Chunk {i+1}:'')\n    print(f''  File: {result[\"\"file_path\"\"]}'')\n    print(f''  Content: {result[\"\"content\"\"][:150]}...'')\n    print(f''  Score: {result[\"\"relevance_score\"\"]}'')\n    print()\n\nprint(''SUCCESS: RAG system is fully functional!'')\nprint(''The chatbot can now retrieve relevant information from the book content.'')\n\")",
+      "Bash(node start-all.js)"
     ],
     "deny": [],
     "ask": []

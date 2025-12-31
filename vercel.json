@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "docusaurus",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run start",
+  "installCommand": "npm install",
+  "outputDirectory": "build",
+  "regions": ["iad1"],
+  "env": {
+    "REACT_APP_BACKEND_URL": "https://chatbot-backend-humanoid-robotics-b.vercel.app"
+  }
+}

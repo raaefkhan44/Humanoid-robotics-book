@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Chatbot Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .chat-container {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 300px;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .user-message {
+            background-color: #e3f2fd;
+            text-align: right;
+        }
+        .bot-message {
+            background-color: #f5f5f5;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #bbdefb;
+            cursor: not-allowed;
+        }
+        .sources {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Physical AI & Humanoid Robotics Book Chatbot</h1>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="message bot-message">
+            Hello! I'm your book assistant. Ask me anything about the Physical AI & Humanoid Robotics textbook.
+        </div>
+    </div>
+
+    <div class="input-container">
+        <input type="text" id="userInput" placeholder="Ask a question about the book..." onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()" id="sendButton">Send</button>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+            sendButton.textContent = 'Sending...';
+
+            // Add user message to chat
+            addMessage(message, 'user');
+            input.value = '';
+
+            try {
+                // Call the backend API
+                const response = await fetch('http://127.0.0.1:8000/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Add bot response to chat
+                addMessage(data.answer, 'bot', data.sources);
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage(`Error: ${error.message}`, 'bot');
+            } finally {
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send';
+            }
+        }
+
+        function addMessage(content, sender, sources = null) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+
+            messageDiv.innerHTML = content;
+
+            if (sources && sources.length > 0) {
+                const sourcesDiv = document.createElement('div');
+                sourcesDiv.className = 'sources';
+                sourcesDiv.innerHTML = '<strong>Sources:</strong> ' + sources.map(s => s.section || s.file_path).join(', ');
+                messageDiv.appendChild(sourcesDiv);
+            }
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>

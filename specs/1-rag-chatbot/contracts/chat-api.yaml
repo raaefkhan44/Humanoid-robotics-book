@@ -1,0 +1,93 @@
+openapi: 3.0.0
+info:
+  title: Book RAG Chatbot API
+  description: API for the Book RAG Chatbot with Floating Icon UI
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+paths:
+  /api/chat:
+    post:
+      summary: Send a message to the book RAG chatbot
+      description: Process user message and return a response based on book content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: The user's message/question
+                  example: "What are the key components of a humanoid robot?"
+                selected_text:
+                  type: string
+                  description: Text selected by user (for selected-text mode)
+                  example: "Humanoid robots typically have actuators, sensors, and a control system."
+                  nullable: true
+                session_id:
+                  type: string
+                  description: Session identifier for conversation continuity
+                  example: "550e8400-e29b-41d4-a716-446655440000"
+                  nullable: true
+              required:
+                - message
+      responses:
+        '200':
+          description: Successful response from the chatbot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer:
+                    type: string
+                    description: The chatbot's response
+                    example: "Humanoid robots typically consist of several key components including actuators for movement, sensors for perception, and a control system for coordination."
+                  sources:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        file_path:
+                          type: string
+                          description: Path to the source document
+                          example: "docs/module1-ros2-nervous-system/chapter-2-core-concepts.md"
+                        section:
+                          type: string
+                          description: Section title in the book
+                          example: "Core Components of Humanoid Robots"
+                        relevance_score:
+                          type: number
+                          description: Relevance score of the source
+                          example: 0.85
+                  session_id:
+                    type: string
+                    description: Session identifier
+                    example: "550e8400-e29b-41d4-a716-446655440000"
+                required:
+                  - answer
+                  - sources
+                  - session_id
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: "Message must be at least 5 characters long"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: "Error processing query"

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e40af;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9fafb;
+            border-left: 4px solid #1e40af;
+            border-radius: 4px;
+        }
+        button {
+            background: #1e40af;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #1e3a8a;
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #059669;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.online {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .status.offline {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Backend Test - AI Chatbot</h1>
+
+        <div class="test-section">
+            <h2>Server Status <span id="status" class="status offline">CHECKING...</span></h2>
+            <button onclick="checkHealth()">Check Health</button>
+            <div id="health-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Chat Endpoint Test</h2>
+            <button onclick="testChat('What is ROS 2?')">Test: "What is ROS 2?"</button>
+            <button onclick="testChat('Explain NVIDIA Isaac Sim')">Test: "Explain NVIDIA Isaac Sim"</button>
+            <button onclick="testChat('What are VLAs in robotics?')">Test: "What are VLAs?"</button>
+            <div id="chat-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Custom Question</h2>
+            <input type="text" id="custom-question" placeholder="Type your question..." style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 10px;">
+            <button onclick="testCustom()">Ask Question</button>
+            <div id="custom-result" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000';
+
+        async function checkHealth() {
+            const resultDiv = document.getElementById('health-result');
+            const statusSpan = document.getElementById('status');
+
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Checking server health...';
+
+            try {
+                const response = await fetch(`${API_URL}/api/health`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    statusSpan.className = 'status online';
+                    statusSpan.textContent = 'ONLINE';
+                    resultDiv.innerHTML = `<span class="success">✅ SERVER ONLINE</span>\n\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    statusSpan.className = 'status offline';
+                    statusSpan.textContent = 'ERROR';
+                    resultDiv.innerHTML = `<span class="error">❌ Server responded with error</span>\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                statusSpan.className = 'status offline';
+                statusSpan.textContent = 'OFFLINE';
+                resultDiv.innerHTML = `<span class="error">❌ CONNECTION FAILED</span>\n\nError: ${error.message}\n\nMake sure the backend is running on port 8000:\nnpm run start-backend`;
+            }
+        }
+
+        async function testChat(question) {
+            const resultDiv = document.getElementById('chat-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `Sending question: "${question}"...\n\nWaiting for AI response...`;
+
+            try {
+                const response = await fetch(`${API_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: question,
+                        selected_text: null,
+                        session_id: null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    let output = `<span class="success">✅ SUCCESS</span>\n\n`;
+                    output += `QUESTION: ${question}\n\n`;
+                    output += `ANSWER:\n${data.answer}\n\n`;
+                    output += `SOURCES (${data.sources.length}):\n`;
+                    data.sources.forEach((source, idx) => {
+                        output += `${idx + 1}. ${source.section || source.file_path}\n`;
+                        output += `   Relevance: ${(source.relevance_score * 100).toFixed(1)}%\n`;
+                    });
+                    output += `\nSESSION ID: ${data.session_id}`;
+
+                    resultDiv.innerHTML = output;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ ERROR</span>\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ REQUEST FAILED</span>\n\nError: ${error.message}`;
+            }
+        }
+
+        async function testCustom() {
+            const question = document.getElementById('custom-question').value.trim();
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+
+            const resultDiv = document.getElementById('custom-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `Sending question: "${question}"...\n\nWaiting for AI response...`;
+
+            try {
+                const response = await fetch(`${API_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: question,
+                        selected_text: null,
+                        session_id: null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    let output = `<span class="success">✅ SUCCESS</span>\n\n`;
+                    output += `QUESTION: ${question}\n\n`;
+                    output += `ANSWER:\n${data.answer}\n\n`;
+                    output += `SOURCES (${data.sources.length}):\n`;
+                    data.sources.forEach((source, idx) => {
+                        output += `${idx + 1}. ${source.section || source.file_path}\n`;
+                        output += `   Relevance: ${(source.relevance_score * 100).toFixed(1)}%\n`;
+                    });
+                    output += `\nSESSION ID: ${data.session_id}`;
+
+                    resultDiv.innerHTML = output;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ ERROR</span>\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ REQUEST FAILED</span>\n\nError: ${error.message}`;
+            }
+        }
+
+        // Check health on page load
+        window.addEventListener('load', checkHealth);
+    </script>
+</body>
+</html>
