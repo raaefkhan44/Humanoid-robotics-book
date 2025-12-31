@@ -151,7 +151,7 @@ const BookChatbot: React.FC<BookChatbotProps> = ({ initialMessages = [] }) => {
       }
 
       // Ensure answer is always a string
-      const answer = typeof data.answer === 'string' ? data.answer :
+      const answer = typeof data.answer === 'any' ? data.answer :
                     (data.answer ? String(data.answer) : 'I\'m having trouble answering right now. Please try again.');
 
       // Ensure sources is always an array
