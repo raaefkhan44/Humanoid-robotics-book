@@ -13,6 +13,9 @@ const config = {
     defaultLocale: 'en',
     locales: ['en'],
   },
+  customFields: {
+    backendUrl: process.env.REACT_APP_BACKEND_URL || 'https://chatbot-backend-humanoid-robotics-b.vercel.app',
+  },
   presets: [
     [
       'classic',

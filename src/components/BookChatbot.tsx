@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
 // Define types for our chat messages
 interface Message {
@@ -20,11 +21,11 @@ interface BookChatbotProps {
 // Default backend URL - can be overridden via localStorage or window variable
 const DEFAULT_BACKEND_URL = 'https://chatbot-backend-humanoid-robotics-b.vercel.app';
 
-// Get backend URL from localStorage, window variable, or use default
-const getBackendUrl = (): string => {
+// Get backend URL from localStorage, window variable, Docusaurus config, or use default
+const getBackendUrl = (docusaurusBackendUrl?: string): string => {
   // Check if there's a custom backend URL set
   if (typeof window !== 'undefined') {
-    // Check localStorage first
+    // Check localStorage first (for manual overrides)
     const storedUrl = localStorage.getItem('backend_url');
     if (storedUrl && storedUrl.trim()) {
       return storedUrl.trim();
@@ -37,11 +38,17 @@ const getBackendUrl = (): string => {
     }
   }
 
-  // Default to localhost for development
+  // Use Docusaurus custom field if available
+  if (docusaurusBackendUrl && docusaurusBackendUrl.trim()) {
+    return docusaurusBackendUrl.trim();
+  }
+
+  // Default fallback
   return DEFAULT_BACKEND_URL;
 };
 
 const BookChatbot: React.FC<BookChatbotProps> = ({ initialMessages = [] }) => {
+  const { siteConfig } = useDocusaurusContext();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -52,10 +59,32 @@ const BookChatbot: React.FC<BookChatbotProps> = ({ initialMessages = [] }) => {
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize backend URL from environment
+  // Initialize backend URL from Docusaurus config or environment
   useEffect(() => {
-    setBackendUrl(getBackendUrl());
-  }, []);
+    const configBackendUrl = (siteConfig.customFields?.backendUrl as string) || '';
+    const resolvedUrl = getBackendUrl(configBackendUrl);
+    setBackendUrl(resolvedUrl);
+    console.log('[BookChatbot] Backend URL initialized:', resolvedUrl);
+
+    // Test backend connectivity on initialization
+    const testConnection = async () => {
+      try {
+        const healthCheckUrl = `${resolvedUrl}/api/health`;
+        console.log('[BookChatbot] Testing backend connection:', healthCheckUrl);
+        const response = await fetch(healthCheckUrl, { method: 'GET' });
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[BookChatbot] Backend health check passed:', data);
+        } else {
+          console.warn('[BookChatbot] Backend health check failed:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('[BookChatbot] Backend connectivity test failed:', error);
+      }
+    };
+
+    testConnection();
+  }, [siteConfig]);
 
   // Function to scroll to bottom of messages
   const scrollToBottom = () => {
@@ -151,7 +180,7 @@ const BookChatbot: React.FC<BookChatbotProps> = ({ initialMessages = [] }) => {
       }
 
       // Ensure answer is always a string
-      const answer = typeof data.answer === 'any' ? data.answer :
+      const answer = typeof data.answer === 'string' ? data.answer :
                     (data.answer ? String(data.answer) : 'I\'m having trouble answering right now. Please try again.');
 
       // Ensure sources is always an array
